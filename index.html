@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de observaciones · SIGESDOC</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">S</div>
+        <div>
+          <div class="brand-name">SIGESDOC</div>
+          <div class="brand-sub">UAPA</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <p class="nav-title">General</p>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+          Panel principal
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>
+          Gestión documental
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Registro de documentos
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Búsqueda avanzada
+        </a>
+
+        <p class="nav-title">Revisión</p>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          Pantalla de revisión
+        </a>
+        <a href="#" class="nav-link active">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>
+          Registro de observaciones
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+          Consulta de revisiones
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">Ley 481-08 · Archivo institucional</div>
+    </aside>
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+
+        <nav class="breadcrumb" aria-label="Ruta">
+          <a href="#">Inicio</a><span>/</span>
+          <a href="#">Revisión</a><span>/</span>
+          <strong>Registro de observaciones</strong>
+        </nav>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar expedientes, documentos…" />
+        </div>
+
+        <div class="topbar-actions">
+          <button class="bell" aria-label="Notificaciones">
+            <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="badge">3</span>
+          </button>
+          <select class="role-select" aria-label="Rol">
+            <option>Revisor</option>
+            <option>Administrador</option>
+            <option>Consultor</option>
+          </select>
+          <div class="avatar">AM</div>
+        </div>
+      </header>
+
+      <main class="content">
+        <div class="page-header">
+          <div>
+            <h1>Registro de observaciones</h1>
+            <p class="subtitle">Registre hallazgos encontrados durante la revisión de un expediente y dé seguimiento a su estado.</p>
+          </div>
+          <span class="demo-pill">Modo demostración</span>
+        </div>
+
+        <!-- Tarjetas de resumen -->
+        <section class="stats">
+          <div class="stat stat-total"><span>Total registradas</span><strong id="statTotal">0</strong></div>
+          <div class="stat stat-pendiente"><span>Pendientes</span><strong id="statPendiente">0</strong></div>
+          <div class="stat stat-revision"><span>En revisión</span><strong id="statRevision">0</strong></div>
+          <div class="stat stat-resuelta"><span>Resueltas</span><strong id="statResuelta">0</strong></div>
+        </section>
+
+        <div class="grid">
+          <!-- Formulario -->
+          <section class="card form-card">
+            <h2>Nueva observación</h2>
+            <p class="card-sub">Los campos marcados con <span class="req">*</span> son obligatorios.</p>
+
+            <div class="alert" id="formAlert" hidden>Revise los campos marcados antes de continuar.</div>
+
+            <form id="obsForm" novalidate>
+              <div class="field">
+                <label for="expediente">Expediente relacionado <span class="req">*</span></label>
+                <select id="expediente">
+                  <option value="">— Seleccione un expediente —</option>
+                </select>
+                <p class="error" id="errExpediente"></p>
+              </div>
+
+              <div class="field">
+                <label for="descripcion">Descripción de la observación <span class="req">*</span></label>
+                <textarea id="descripcion" rows="5" maxlength="1000" placeholder="Describa la observación encontrada en el expediente…"></textarea>
+                <div class="field-foot">
+                  <p class="error" id="errDescripcion"></p>
+                  <span class="counter" id="counter">0/1000</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Estado <span class="req">*</span></label>
+                <div class="status-group" role="radiogroup">
+                  <button type="button" class="status-btn selected" data-estado="pendiente" role="radio" aria-checked="true"><i class="dot pendiente"></i>Pendiente</button>
+                  <button type="button" class="status-btn" data-estado="revision" role="radio" aria-checked="false"><i class="dot revision"></i>En revisión</button>
+                  <button type="button" class="status-btn" data-estado="resuelta" role="radio" aria-checked="false"><i class="dot resuelta"></i>Resuelta</button>
+                </div>
+              </div>
+
+              <div class="row-2">
+                <div class="field">
+                  <label for="usuario">Registrado por</label>
+                  <input id="usuario" type="text" value="Ángel Matos" readonly />
+                  <p class="hint">Se toma del usuario en sesión.</p>
+                </div>
+                <div class="field">
+                  <label for="fecha">Fecha</label>
+                  <input id="fecha" type="text" readonly />
+                  <p class="hint">Se registra automáticamente.</p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="btnLimpiar">Limpiar</button>
+                <button type="submit" class="btn btn-primary">Registrar observación</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Tabla -->
+          <section class="card table-card">
+            <div class="table-head">
+              <h2>Últimas observaciones registradas</h2>
+              <p class="card-sub" id="tableCount">0 de 0 observaciones</p>
+              <div class="filters">
+                <input type="text" id="filtroTexto" placeholder="Filtrar…" />
+                <select id="filtroEstado">
+                  <option value="">Todos los estados</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="revision">En revisión</option>
+                  <option value="resuelta">Resuelta</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Expediente</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+              <p class="empty" id="empty" hidden>No hay observaciones que coincidan con el filtro.</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Observación registrada correctamente.</div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
