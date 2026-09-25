@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de observaciones · SIGESDOC</title>
+  <meta name="description" content="SIGESDOC (UAPA): módulo para registrar y dar seguimiento a observaciones de expedientes." />
+  <meta name="theme-color" content="#0f2d5c" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f2d5c'/%3E%3Crect y='28' width='32' height='4' fill='%23f28c1e'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='18' fill='white' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E" />
+  <style>
+/* ==========================================================
+   SIGESDOC · Registro de observaciones
+   ========================================================== */
+:root {
+  --navy: #0f2d5c;
+  --navy-dark: #0b2147;
+  --primary: #0b5ea8;
+  --primary-hover: #094f8e;
+  --accent: #f28c1e;
+
+  --bg: #0b5ea8;
+  --surface: #ffffff;
+  --border: #dde4ee;
+  --border-soft: #e8edf4;
+  --text: #16233a;
+  --muted: #5d6b80;
+  --muted-2: #7a879a;
+
+  --pendiente: #a8720a;
+  --pendiente-bg: #fdf1d8;
+  --revision: #1a8fd6;
+  --revision-text: #0b5ea8;
+  --revision-bg: #e3f1fc;
+  --resuelta: #1f7a55;
+  --resuelta-bg: #e1f3ea;
+
+  --danger: #c0262d;
+  --danger-bg: #fdecec;
+  --danger-border: #f4b9bb;
+
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(15, 45, 92, .06), 0 2px 8px rgba(15, 45, 92, .05);
+  --sidebar-w: 215px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  background: linear-gradient(160deg, #0b5ea8 0%, #0f2d5c 100%) fixed;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+svg {
+  width: 18px; height: 18px;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.layout { display: flex; min-height: 100vh; }
+
+/* ---------------- Sidebar ---------------- */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; inset: 0 auto 0 0;
+  z-index: 40;
+  transition: transform .25s ease;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 22px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.brand-logo {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--navy);
+  color: #fff; font-weight: 700; font-size: 15px;
+  display: grid; place-items: center;
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+.brand-name { font-weight: 700; font-size: 15px; color: var(--navy); letter-spacing: .2px; }
+.brand-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.nav { padding: 12px 14px; flex: 1; }
+.nav-title {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .8px; text-transform: uppercase;
+  color: var(--text);
+  padding: 16px 8px 8px;
+}
+.nav-link {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #2b3950;
+  white-space: nowrap;
+  margin-bottom: 2px;
+  transition: background .15s;
+}
+.nav-link svg { width: 17px; height: 17px; color: #3f4d63; }
+.nav-link:hover { background: #f1f5fa; }
+.nav-link.active {
+  background: #e8f1fb;
+  color: var(--primary);
+  font-weight: 600;
+}
+.nav-link.active svg { color: var(--primary); }
+.nav-link.active::before {
+  content: "";
+  position: absolute; left: -14px; top: 6px; bottom: 6px;
+  width: 4px; border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-soft);
+  padding: 16px 22px;
+  font-size: 11.5px; color: var(--muted);
+}
+
+.backdrop { display: none; }
+
+/* ---------------- Main ---------------- */
+.main { flex: 1; margin-left: var(--sidebar-w); min-width: 0; }
+
+.topbar {
+  height: 62px;
+  display: flex; align-items: center; gap: 24px;
+  padding: 0 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 20;
+}
+.menu-btn { display: none; background: none; border: 0; cursor: pointer; padding: 6px; color: var(--text); }
+.menu-btn svg { width: 22px; height: 22px; }
+
+.breadcrumb { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; white-space: nowrap; }
+.breadcrumb a:hover { color: var(--primary); }
+.breadcrumb strong { color: var(--text); font-weight: 600; }
+
+.search {
+  flex: 1; max-width: 400px; margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
+  background: #f4f6f9;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px; height: 38px;
+  color: var(--muted-2);
+}
+.search svg { width: 16px; height: 16px; }
+.search input { border: 0; background: transparent; outline: none; width: 100%; font-size: 13px; color: var(--text); }
+.search:focus-within { border-color: var(--primary); background: #fff; }
+
+.topbar-actions { display: flex; align-items: center; gap: 14px; }
+.bell { position: relative; background: none; border: 0; cursor: pointer; color: #2b3950; padding: 6px; }
+.bell svg { width: 20px; height: 20px; }
+.badge {
+  position: absolute; top: 0; right: -1px;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 8px;
+  background: var(--accent); color: #fff;
+  font-size: 9.5px; font-weight: 700;
+  display: grid; place-items: center;
+  border: 1.5px solid #fff;
+}
+.role-select {
+  height: 38px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fff; font-size: 13px; cursor: pointer;
+  min-width: 118px;
+}
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--navy); color: #fff;
+  font-size: 12.5px; font-weight: 700;
+  display: grid; place-items: center;
+}
+
+.content { padding: 28px 22px 40px; }
+
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 16px; margin-bottom: 22px;
+}
+.page-header h1 { font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -.2px; }
+.subtitle { color: #d6e6f7; font-size: 13px; margin-top: 6px; }
+.demo-pill {
+  background: rgba(255,255,255,.16); color: #ffffff;
+  border: 1px solid rgba(255,255,255,.35);
+  font-size: 11.5px; font-weight: 600;
+  padding: 6px 10px; border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* ---------------- Stats ---------------- */
+.stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-bottom: 18px;
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid #8fc1ef;
+  border-radius: var(--radius);
+  padding: 14px 16px 12px;
+  box-shadow: var(--shadow);
+}
+.stat span {
+  display: block; font-size: 11.5px;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--muted);
+}
+.stat strong { display: block; font-size: 22px; font-weight: 700; color: var(--navy-dark); margin-top: 6px; }
+.stat-pendiente { border-top-color: var(--pendiente); }
+.stat-revision  { border-top-color: var(--revision); }
+.stat-resuelta  { border-top-color: var(--resuelta); }
+
+/* ---------------- Grid & cards ---------------- */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 1.75fr;
+  gap: 16px; align-items: start;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.card h2 { font-size: 16px; font-weight: 700; color: var(--text); }
+.card-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.req { color: var(--danger); }
+
+/* ---------------- Form ---------------- */
+.form-card { padding: 20px 16px 20px; }
+.form-card .card-sub { margin-bottom: 20px; }
+
+.alert {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  margin-bottom: 20px;
+}
+.alert[hidden] { display: none; }
+
+.field { margin-bottom: 20px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 10px; }
+
+.field select,
+.field textarea,
+.field input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field select { height: 30px; padding: 0 8px; cursor: pointer; }
+.field textarea { padding: 10px; resize: vertical; min-height: 84px; line-height: 1.5; }
+.field textarea::placeholder { color: var(--muted-2); }
+.field select:focus, .field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 94, 168, .12);
+}
+.field input[readonly] {
+  height: 30px; padding: 0 10px;
+  background: #eef2f7; color: var(--muted);
+  cursor: default;
+}
+
+.field.invalid select,
+.field.invalid textarea {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+.error { color: var(--danger); font-size: 11.5px; margin-top: 6px; }
+.error:empty { display: none; }
+.field-foot { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.counter { margin-left: auto; font-size: 11px; color: var(--muted); margin-top: 6px; }
+.hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+.status-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.status-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.status-btn:hover { background: #f5f8fc; }
+.status-btn.selected {
+  background: #e8f2fc;
+  border-color: var(--primary);
+  color: var(--navy);
+  font-weight: 600;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dot.pendiente { background: var(--pendiente); }
+.dot.revision  { background: var(--revision); }
+.dot.resuelta  { background: var(--resuelta); }
+
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row-2 .field { margin-bottom: 0; }
+
+.form-actions {
+  display: flex; justify-content: flex-end; gap: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 30px; padding-top: 10px;
+}
+.btn {
+  height: 30px; padding: 0 16px;
+  border-radius: 6px;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.btn-outline { background: #fff; border: 1px solid var(--border); color: var(--primary); }
+.btn-outline:hover { background: #f3f7fc; }
+.btn-primary { background: var(--primary); border: 1px solid var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+
+/* ---------------- Table ---------------- */
+.table-card { overflow: hidden; }
+.table-head { padding: 18px 16px 14px; }
+.filters { display: flex; gap: 6px; margin-top: 18px; }
+.filters input, .filters select {
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  background: #fff;
+  outline: none;
+}
+.filters input { width: 118px; }
+.filters select { cursor: pointer; }
+.filters input:focus, .filters select:focus { border-color: var(--primary); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: #f3f6fa;
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--muted);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+tbody tr { transition: background .2s; }
+tbody tr:hover { background: #f8fafd; }
+tbody tr.new-row { animation: fadeHighlight 4s ease forwards; }
+@keyframes fadeHighlight { 0%, 70% { background: #eaf3fc; } 100% { background: transparent; } }
+
+.exp-code { color: var(--primary); font-weight: 700; font-size: 12.5px; }
+.exp-name { color: var(--muted); font-size: 10.5px; line-height: 1.5; margin-top: 2px; max-width: 110px; }
+.col-desc { max-width: 260px; }
+.reg-user { white-space: nowrap; }
+.reg-date { color: var(--muted); font-size: 10.5px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px; font-weight: 600;
+  white-space: nowrap;
+}
+.pill .dot { width: 5px; height: 5px; }
+.pill.pendiente { background: var(--pendiente-bg); color: #8a5c05; }
+.pill.revision  { background: var(--revision-bg); color: var(--revision-text); }
+.pill.revision .dot { background: var(--revision-text); }
+.pill.resuelta  { background: var(--resuelta-bg); color: var(--resuelta); }
+
+.empty { padding: 24px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.empty[hidden] { display: none; }
+
+/* ---------------- Toast ---------------- */
+.toast {
+  position: fixed; right: 16px; bottom: 16px;
+  background: #1f7a55; color: #fff;
+  font-weight: 600; font-size: 13px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  opacity: 0; transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 60;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 1080px) {
+  .grid { grid-template-columns: 1fr; }
+  .breadcrumb { display: none; }
+}
+
+@media (max-width: 860px) {
+  .sidebar { transform: translateX(-100%); box-shadow: 0 0 30px rgba(0,0,0,.15); }
+  .sidebar.open { transform: translateX(0); }
+  .backdrop.show { display: block; position: fixed; inset: 0; background: rgba(15,30,60,.35); z-index: 30; }
+  .main { margin-left: 0; }
+  .menu-btn { display: inline-flex; }
+  .search, .role-select { display: none; }
+  .topbar { justify-content: space-between; height: 82px; padding: 0 18px; }
+  .avatar { width: 46px; height: 46px; font-size: 15px; }
+  .content { padding: 22px 18px 32px; }
+  .page-header { flex-direction: column; gap: 12px; }
+  .page-header h1 { font-size: 30px; }
+  .subtitle { font-size: 16px; line-height: 1.5; }
+  .demo-pill { font-size: 14px; padding: 8px 14px; border-radius: 12px; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 20px; }
+  .stat { padding: 18px 26px 16px; border-radius: 14px; }
+  .stat span { font-size: 14.5px; line-height: 1.5; }
+  .stat strong { font-size: 30px; }
+  .form-card { padding: 26px 28px; }
+  .card h2 { font-size: 19px; }
+  .card-sub { font-size: 14.5px; }
+  .field label { font-size: 14.5px; }
+  .field select { height: 42px; font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+  .status-group { grid-template-columns: 1fr; }
+  .row-2 { grid-template-columns: 1fr; gap: 20px; }
+  .filters { flex-wrap: wrap; }
+}
+
+</style>
+</head>
+<body>
+  <div class="layout">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">S</div>
+        <div>
+          <div class="brand-name">SIGESDOC</div>
+          <div class="brand-sub">UAPA</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <p class="nav-title">General</p>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+          Panel principal
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>
+          Gestión documental
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Registro de documentos
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Búsqueda avanzada
+        </a>
+
+        <p class="nav-title">Revisión</p>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          Pantalla de revisión
+        </a>
+        <a href="#" class="nav-link active">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>
+          Registro de observaciones
+        </a>
+        <a href="#" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+          Consulta de revisiones
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">Ley 481-08 · Archivo institucional</div>
+    </aside>
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+
+        <nav class="breadcrumb" aria-label="Ruta">
+          <a href="#">Inicio</a><span>/</span>
+          <a href="#">Revisión</a><span>/</span>
+          <strong>Registro de observaciones</strong>
+        </nav>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar expedientes, documentos…" />
+        </div>
+
+        <div class="topbar-actions">
+          <button class="bell" aria-label="Notificaciones">
+            <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="badge">3</span>
+          </button>
+          <select class="role-select" aria-label="Rol">
+            <option>Revisor</option>
+            <option>Administrador</option>
+            <option>Consultor</option>
+          </select>
+          <div class="avatar">AM</div>
+        </div>
+      </header>
+
+      <main class="content">
+        <div class="page-header">
+          <div>
+            <h1>Registro de observaciones</h1>
+            <p class="subtitle">Registre hallazgos encontrados durante la revisión de un expediente y dé seguimiento a su estado.</p>
+          </div>
+          <span class="demo-pill">Modo demostración</span>
+        </div>
+
+        <!-- Tarjetas de resumen -->
+        <section class="stats">
+          <div class="stat stat-total"><span>Total registradas</span><strong id="statTotal">0</strong></div>
+          <div class="stat stat-pendiente"><span>Pendientes</span><strong id="statPendiente">0</strong></div>
+          <div class="stat stat-revision"><span>En revisión</span><strong id="statRevision">0</strong></div>
+          <div class="stat stat-resuelta"><span>Resueltas</span><strong id="statResuelta">0</strong></div>
+        </section>
+
+        <div class="grid">
+          <!-- Formulario -->
+          <section class="card form-card">
+            <h2>Nueva observación</h2>
+            <p class="card-sub">Los campos marcados con <span class="req">*</span> son obligatorios.</p>
+
+            <div class="alert" id="formAlert" hidden>Revise los campos marcados antes de continuar.</div>
+
+            <form id="obsForm" novalidate>
+              <div class="field">
+                <label for="expediente">Expediente relacionado <span class="req">*</span></label>
+                <select id="expediente">
+                  <option value="">— Seleccione un expediente —</option>
+                </select>
+                <p class="error" id="errExpediente"></p>
+              </div>
+
+              <div class="field">
+                <label for="descripcion">Descripción de la observación <span class="req">*</span></label>
+                <textarea id="descripcion" rows="5" maxlength="1000" placeholder="Describa la observación encontrada en el expediente…"></textarea>
+                <div class="field-foot">
+                  <p class="error" id="errDescripcion"></p>
+                  <span class="counter" id="counter">0/1000</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Estado <span class="req">*</span></label>
+                <div class="status-group" role="radiogroup">
+                  <button type="button" class="status-btn selected" data-estado="pendiente" role="radio" aria-checked="true"><i class="dot pendiente"></i>Pendiente</button>
+                  <button type="button" class="status-btn" data-estado="revision" role="radio" aria-checked="false"><i class="dot revision"></i>En revisión</button>
+                  <button type="button" class="status-btn" data-estado="resuelta" role="radio" aria-checked="false"><i class="dot resuelta"></i>Resuelta</button>
+                </div>
+              </div>
+
+              <div class="row-2">
+                <div class="field">
+                  <label for="usuario">Registrado por</label>
+                  <input id="usuario" type="text" value="Ángel Matos" readonly />
+                  <p class="hint">Se toma del usuario en sesión.</p>
+                </div>
+                <div class="field">
+                  <label for="fecha">Fecha</label>
+                  <input id="fecha" type="text" readonly />
+                  <p class="hint">Se registra automáticamente.</p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="btnLimpiar">Limpiar</button>
+                <button type="submit" class="btn btn-primary">Registrar observación</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Tabla -->
+          <section class="card table-card">
+            <div class="table-head">
+              <h2>Últimas observaciones registradas</h2>
+              <p class="card-sub" id="tableCount">0 de 0 observaciones</p>
+              <div class="filters">
+                <input type="text" id="filtroTexto" placeholder="Filtrar…" />
+                <select id="filtroEstado">
+                  <option value="">Todos los estados</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="revision">En revisión</option>
+                  <option value="resuelta">Resuelta</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Expediente</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+              <p class="empty" id="empty" hidden>No hay observaciones que coincidan con el filtro.</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Observación registrada correctamente.</div>
+
+  <script>
+/* ==========================================================
+   SIGESDOC · Registro de observaciones (lógica)
+   ========================================================== */
+(function () {
+  "use strict";
+
+  // ---------- Datos de demostración ----------
+  const USUARIO_SESION = "Ángel Matos";
+
+  const EXPEDIENTES = [
+    { codigo: "EXP-2026-0178", nombre: "Acta de consejo académico" },
+    { codigo: "EXP-2026-0161", nombre: "Contrato de servicios docentes" },
+    { codigo: "EXP-2026-0155", nombre: "Expediente académico – Admisiones" },
+    { codigo: "EXP-2026-0142", nombre: "Solicitud de convalidación de asignaturas" },
+    { codigo: "EXP-2026-0137", nombre: "Informe de auditoría interna" },
+    { codigo: "EXP-2026-0129", nombre: "Nómina de personal administrativo" }
+  ];
+
+  const ESTADOS = {
+    pendiente: "Pendiente",
+    revision: "En revisión",
+    resuelta: "Resuelta"
+  };
+
+  let observaciones = [
+    {
+      codigo: "EXP-2026-0142",
+      descripcion: "Falta la firma del coordinador académico en el formulario de convalidación.",
+      estado: "pendiente",
+      usuario: "María Rodríguez",
+      fecha: "2026-09-22"
+    },
+    {
+      codigo: "EXP-2026-0161",
+      descripcion: "El anexo 2 no coincide con la versión aprobada por Recursos Humanos.",
+      estado: "revision",
+      usuario: "José Peña",
+      fecha: "2026-09-21"
+    },
+    {
+      codigo: "EXP-2026-0155",
+      descripcion: "Se corrigió el número de matrícula en la ficha de admisión.",
+      estado: "resuelta",
+      usuario: "Ángel Matos",
+      fecha: "2026-09-19"
+    }
+  ];
+
+  // ---------- Referencias al DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const form = $("obsForm");
+  const selExpediente = $("expediente");
+  const txtDescripcion = $("descripcion");
+  const counter = $("counter");
+  const alertBox = $("formAlert");
+  const errExp = $("errExpediente");
+  const errDesc = $("errDescripcion");
+  const inpFecha = $("fecha");
+  const inpUsuario = $("usuario");
+  const statusBtns = document.querySelectorAll(".status-btn");
+  const tbody = $("tbody");
+  const tableCount = $("tableCount");
+  const emptyMsg = $("empty");
+  const filtroTexto = $("filtroTexto");
+  const filtroEstado = $("filtroEstado");
+  const toast = $("toast");
+
+  let estadoSeleccionado = "pendiente";
+  let ultimoAgregado = null;
+
+  // ---------- Utilidades ----------
+  const hoyISO = () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
+  const formatoFecha = (iso) => {
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  };
+
+  const escapeHTML = (str) =>
+    str.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  const nombreExpediente = (codigo) =>
+    (EXPEDIENTES.find((e) => e.codigo === codigo) || {}).nombre || "";
+
+  const normalizar = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+  // ---------- Inicialización ----------
+  function init() {
+    EXPEDIENTES.forEach((e) => {
+      const opt = document.createElement("option");
+      opt.value = e.codigo;
+      opt.textContent = `${e.codigo} · ${e.nombre}`;
+      selExpediente.appendChild(opt);
+    });
+
+    inpUsuario.value = USUARIO_SESION;
+    inpFecha.value = formatoFecha(hoyISO());
+
+    render();
+  }
+
+  // ---------- Render ----------
+  function renderStats() {
+    const cuenta = (e) => observaciones.filter((o) => o.estado === e).length;
+    $("statTotal").textContent = observaciones.length;
+    $("statPendiente").textContent = cuenta("pendiente");
+    $("statRevision").textContent = cuenta("revision");
+    $("statResuelta").textContent = cuenta("resuelta");
+  }
+
+  function renderTabla() {
+    const texto = normalizar(filtroTexto.value.trim());
+    const estado = filtroEstado.value;
+
+    const filtradas = observaciones.filter((o) => {
+      if (estado && o.estado !== estado) return false;
+      if (!texto) return true;
+      const hay = normalizar(`${o.codigo} ${nombreExpediente(o.codigo)} ${o.descripcion} ${o.usuario}`);
+      return hay.includes(texto);
+    });
+
+    tbody.innerHTML = filtradas
+      .map((o) => `
+        <tr class="${o === ultimoAgregado ? "new-row" : ""}">
+          <td>
+            <div class="exp-code">${escapeHTML(o.codigo)}</div>
+            <div class="exp-name">${escapeHTML(nombreExpediente(o.codigo))}</div>
+          </td>
+          <td class="col-desc">${escapeHTML(o.descripcion)}</td>
+          <td><span class="pill ${o.estado}"><i class="dot ${o.estado}"></i>${ESTADOS[o.estado]}</span></td>
+          <td>
+            <div class="reg-user">${escapeHTML(o.usuario)}</div>
+            <div class="reg-date">${formatoFecha(o.fecha)}</div>
+          </td>
+        </tr>`)
+      .join("");
+
+    tableCount.textContent = `${filtradas.length} de ${observaciones.length} observaciones`;
+    emptyMsg.hidden = filtradas.length > 0;
+  }
+
+  function render() {
+    renderStats();
+    renderTabla();
+  }
+
+  // ---------- Validación ----------
+  function marcar(campo, errorEl, mensaje) {
+    const field = campo.closest(".field");
+    field.classList.toggle("invalid", !!mensaje);
+    errorEl.textContent = mensaje || "";
+  }
+
+  function validar() {
+    let ok = true;
+
+    if (!selExpediente.value) {
+      marcar(selExpediente, errExp, "Seleccione el expediente relacionado.");
+      ok = false;
+    } else marcar(selExpediente, errExp, "");
+
+    const desc = txtDescripcion.value.trim();
+    if (!desc) {
+      marcar(txtDescripcion, errDesc, "La descripción es obligatoria.");
+      ok = false;
+    } else if (desc.length < 10) {
+      marcar(txtDescripcion, errDesc, "La descripción debe tener al menos 10 caracteres.");
+      ok = false;
+    } else marcar(txtDescripcion, errDesc, "");
+
+    alertBox.hidden = ok;
+    return ok;
+  }
+
+  // ---------- Acciones ----------
+  function seleccionarEstado(estado) {
+    estadoSeleccionado = estado;
+    statusBtns.forEach((b) => {
+      const activo = b.dataset.estado === estado;
+      b.classList.toggle("selected", activo);
+      b.setAttribute("aria-checked", activo);
+    });
+  }
+
+  function limpiar() {
+    form.reset();
+    inpUsuario.value = USUARIO_SESION;
+    inpFecha.value = formatoFecha(hoyISO());
+    counter.textContent = "0/1000";
+    seleccionarEstado("pendiente");
+    marcar(selExpediente, errExp, "");
+    marcar(txtDescripcion, errDesc, "");
+    alertBox.hidden = true;
+  }
+
+  let toastTimer;
+  function mostrarToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+  }
+
+  // ---------- Eventos ----------
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!validar()) {
+      (selExpediente.value ? txtDescripcion : selExpediente).focus();
+      return;
+    }
+
+    const nueva = {
+      codigo: selExpediente.value,
+      descripcion: txtDescripcion.value.trim(),
+      estado: estadoSeleccionado,
+      usuario: USUARIO_SESION,
+      fecha: hoyISO()
+    };
+    observaciones.unshift(nueva);
+    ultimoAgregado = nueva;
+
+    render();
+    limpiar();
+    mostrarToast("Observación registrada correctamente.");
+  });
+
+  $("btnLimpiar").addEventListener("click", limpiar);
+
+  statusBtns.forEach((b) => b.addEventListener("click", () => seleccionarEstado(b.dataset.estado)));
+
+  txtDescripcion.addEventListener("input", () => {
+    counter.textContent = `${txtDescripcion.value.length}/1000`;
+    if (txtDescripcion.closest(".field").classList.contains("invalid") && txtDescripcion.value.trim()) {
+      marcar(txtDescripcion, errDesc, "");
+    }
+  });
+
+  selExpediente.addEventListener("change", () => {
+    if (selExpediente.value) marcar(selExpediente, errExp, "");
+  });
+
+  filtroTexto.addEventListener("input", () => { ultimoAgregado = null; renderTabla(); });
+  filtroEstado.addEventListener("change", () => { ultimoAgregado = null; renderTabla(); });
+
+  // Menú móvil
+  const sidebar = $("sidebar");
+  const backdrop = $("backdrop");
+  const toggleMenu = (abrir) => {
+    sidebar.classList.toggle("open", abrir);
+    backdrop.classList.toggle("show", abrir);
+  };
+  $("menuBtn").addEventListener("click", () => toggleMenu(!sidebar.classList.contains("open")));
+  backdrop.addEventListener("click", () => toggleMenu(false));
+
+  init();
+})();
+
+</script>
+</body>
+</html>
